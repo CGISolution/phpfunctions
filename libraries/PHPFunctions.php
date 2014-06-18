@@ -29,9 +29,12 @@
  
 class PHPFunctions
 {
+	private $ci;
+	
     function __construct ()
     {
-    
+
+		$this->ci = $this->getInstance();
     }
 
 
@@ -330,4 +333,178 @@ class PHPFunctions
 		
 		return $return;
 	}
+
+	public function minFiles ($files, $path, $type = 'text/javascript', $min = true, $method = 'f')
+	{
+		if (empty($files)) throw new Exception("No Files to minify");
+		if (empty($path)) throw new Exception("Path is empty!");
+		
+		$scripts = array();
+
+		if (is_array($files))
+		{
+			foreach ($files as $file)
+			{
+				$ext = $this->getFileExt($file);
+
+				if ($ext == 'JS')
+				{
+					$scripts[] = $this->_buildJsScript($file, $path, $type, $min);
+				}
+				else if ($ext == 'CSS')
+				{
+					$scripts[] = $this->_buildCssScript($file, $path, $min);		
+				}
+			}
+		}
+		else
+		{
+			foreach (explode(' ', $files) as $k => $file)
+			{
+				$ext = $this->getFileExt($file);
+				
+				if ($ext == 'JS')
+				{
+					$scripts[] = $this->_buildJsScript($file, $path, $type, $min);
+				}
+				else if ($ext == 'CSS')
+				{
+					$scripts[] = $this->_buildCssScript($file, $path, $min);					
+				}
+			}
+		}
+
+		
+		return PHP_EOL . implode(PHP_EOL, $scripts) . PHP_EOL;
+	}
+
+    /**
+     * TODO: short description.
+     *
+     * @param mixed $name 
+     *
+     * @return TODO
+     */
+    public function jsScript($name, $path = null, $type = 'text/javascript', $min = true, $method = 'f')
+    {
+    	if (empty($path)) $path = 'public' . DS . 'js' . DS;
+    	
+    	$scripts = array();
+    
+    	if (empty($name)) throw new Exception("Javascript filename is empty!");
+    	
+		if (is_array($name))
+		{
+			if (!empty($name))
+			{
+					foreach ($name as $k => $file)
+					{
+						$scripts[] = $this->_buildJsScript($file, $path, $type, $min, $method);						
+					}
+			}
+		}
+		else
+		{
+			foreach (explode(' ', $name) as $k => $file)
+			{
+				$scripts[] = $this->_buildJsScript($file, $path, $type, $min, $method);
+			}	
+		}
+		
+		return PHP_EOL . implode(PHP_EOL, $scripts) . PHP_EOL;
+    }
+    
+    // builds actual HTML string for javascript
+    private function _buildJsScript ($name, $path = null, $type = 'text/javascript', $min = true, $method = 'f')
+    {
+    	if (empty($path)) $path = 'public' . DS . 'js' . DS;
+
+		$httpCheck = stripos($name, 'http');
+
+    	if ($httpCheck === false)
+    	{
+
+    		if (!file_exists($path . $name)) return false;
+		
+			if ($min)
+			{
+				// check for CodeIgniter Instance
+				$debug = ($this->ci) ? $this->ci->config->item('min_debug') : null;
+				$version = ($this->ci) ? '&amp;' . $this->ci->config->item('min_version') : null;
+				
+				$src = "/min/?{$method}={$path}{$name}{$debug}{$version}";	
+			} 
+			else $src = $path . $name;
+		}
+		else
+		{
+			$src = $name; 
+		}
+		
+		if (!empty($type)) $type = "type='{$type}' ";
+		
+    	if (DYNAMIC) 
+    	{
+	    	$this->minscripts[] = $src;
+	    	return '';
+    	}
+    	
+    	return  "<script {$type}src='{$src}'></script>";
+    }
+    
+    public function cssScript ($name, $path = null, $min = true, $method = 'f')
+    {
+    	if (empty($path)) $path = 'public' . DS . 'css' . DS;
+    	
+    	$scripts = array();
+    
+    	if (empty($name)) throw new Exception("CSS filename is empty!");
+    	
+		if (is_array($name))
+		{
+			if (!empty($name))
+			{
+					foreach ($name as $k => $file)
+					{
+						$scripts[] = $this->_buildCssScript($file, $path, $min, $method);						
+					}
+			}
+		}
+		else
+		{
+			foreach (explode(' ', $name) as $k => $file)
+			{
+				$scripts[] = $this->_buildCssScript($file, $path, $min, $method);
+			}	
+		}
+		
+		return PHP_EOL . implode(PHP_EOL, $scripts) . PHP_EOL;
+    }
+    
+    // builds actual HTML string for Css scripts
+    private function _buildCssScript ($name, $path = null, $min = true, $method = 'f')
+    {
+    	if (empty($path)) $path = 'public' . DS . 'css' . DS;
+    	
+		// checks if file eixsts
+		if (!file_exists($path . $name)) return false;
+   		
+   		if ($min)
+   		{
+			$debug = ($this->ci) ? $this->ci->config->item('min_debug') : null;
+			$version = ($this->ci) ? '&amp;' . $this->ci->config->item('min_version') : null;
+			
+			$src = "/min/?{$method}={$path}{$name}{$debug}{$version}";
+   		}
+		else $src = $path . $name;
+		
+    	if (DYNAMIC) 
+    	{
+	    	$this->minscripts[] = $src;
+	    	return '';
+    	}
+		
+	    return "<link rel='stylesheet' type='text/css' href='{$src}' />";	    
+    }
+
 }
