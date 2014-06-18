@@ -29,13 +29,26 @@
  
 class PHPFunctions
 {
-	private $ci;
+	private $min_version, $min_debug;
 	
-    function __construct ()
+	public $minscripts;
+		
+    function __construct ($args)
     {
+		$this->minscripts = array();
 
-		$this->ci = $this->getInstance();
+		$this->min_version = $args['min_version'];
+		$this->min_debug = $args['min_debug'];
     }
+
+	public function setMinVersion ($version, $debug = false)
+	{
+		$this->min_version = $version;
+		$this->min_debug = $debug;
+		
+		return true;
+	}
+	
 
 
     /**
@@ -429,8 +442,8 @@ class PHPFunctions
 			if ($min)
 			{
 				// check for CodeIgniter Instance
-				$debug = ($this->ci) ? $this->ci->config->item('min_debug') : null;
-				$version = ($this->ci) ? '&amp;' . $this->ci->config->item('min_version') : null;
+			$version = ($this->min_version) ? '&amp;' . $this->min_version : null;
+			$debug = ($this->min_debug) ? '&amp;debug' : null;
 				
 				$src = "/min/?{$method}={$path}{$name}{$debug}{$version}";	
 			} 
@@ -491,8 +504,8 @@ class PHPFunctions
    		
    		if ($min)
    		{
-			$debug = ($this->ci) ? $this->ci->config->item('min_debug') : null;
-			$version = ($this->ci) ? '&amp;' . $this->ci->config->item('min_version') : null;
+			$version = ($this->min_version) ? '&amp;' . $this->min_version : null;
+			$debug = ($this->min_debug) ? '&amp;debug' : null;
 			
 			$src = "/min/?{$method}={$path}{$name}{$debug}{$version}";
    		}
