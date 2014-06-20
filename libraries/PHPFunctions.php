@@ -25,7 +25,9 @@
  *  SOFTWARE.
  *
  */
- 
+
+
+if (!defined('DYNAMIC')) define('DYNAMIC', false);
  
 class PHPFunctions
 {
@@ -418,17 +420,18 @@ class PHPFunctions
 		}
 		else
 		{
+
 			foreach (explode(' ', $name) as $k => $file)
 			{
 				$scripts[] = $this->_buildJsScript($file, $path, $type, $min, $method);
 			}	
 		}
-		
+
 		return PHP_EOL . implode(PHP_EOL, $scripts) . PHP_EOL;
     }
     
     // builds actual HTML string for javascript
-    private function _buildJsScript ($name, $path = null, $type = 'text/javascript', $min = true, $method = 'f')
+    protected function _buildJsScript ($name, $path = null, $type = 'text/javascript', $min = true, $method = 'f')
     {
     	if (empty($path)) $path = 'public' . DS . 'js' . DS;
 
@@ -437,7 +440,7 @@ class PHPFunctions
     	if ($httpCheck === false)
     	{
 
-    		if (!file_exists($path . $name)) return false;
+    		//if (!file_exists($path . $name)) return false;
 		
 			if ($min)
 			{
@@ -445,7 +448,7 @@ class PHPFunctions
 			$version = ($this->min_version) ? '&amp;' . $this->min_version : null;
 			$debug = ($this->min_debug) ? '&amp;debug' : null;
 				
-				$src = "/min/?{$method}={$path}{$name}{$debug}{$version}";	
+				$src = "/min/?{$method}={$path}{$name}{$debug}{$version}";
 			} 
 			else $src = $path . $name;
 		}
@@ -453,7 +456,7 @@ class PHPFunctions
 		{
 			$src = $name; 
 		}
-		
+
 		if (!empty($type)) $type = "type='{$type}' ";
 		
     	if (DYNAMIC) 
@@ -461,7 +464,8 @@ class PHPFunctions
 	    	$this->minscripts[] = $src;
 	    	return '';
     	}
-    	
+   	
+
     	return  "<script {$type}src='{$src}'></script>";
     }
     
@@ -495,12 +499,12 @@ class PHPFunctions
     }
     
     // builds actual HTML string for Css scripts
-    private function _buildCssScript ($name, $path = null, $min = true, $method = 'f')
+    protected function _buildCssScript ($name, $path = null, $min = true, $method = 'f')
     {
     	if (empty($path)) $path = 'public' . DS . 'css' . DS;
     	
 		// checks if file eixsts
-		if (!file_exists($path . $name)) return false;
+		//if (!file_exists($path . $name)) return false;
    		
    		if ($min)
    		{
@@ -520,4 +524,20 @@ class PHPFunctions
 	    return "<link rel='stylesheet' type='text/css' href='{$src}' />";	    
     }
 
+
+	/*
+	* general stack trace to error log
+	*/
+    public static function sendStackTrace($e)
+    {
+        $body = "Stack Trace Error:\n\n";
+        $body .= "URL: {$_SERVER["SERVER_NAME"]}{$_SERVER["REQUEST_URI"]}\n";
+        $body .= "Referer: {$_SERVER['HTTP_REFERER']}\n";
+        $body .= "Message: " . $e->getMessage() . "\n\n";
+        $body .= $e;
+
+        error_log($body);
+        
+		return true;
+	}
 }
