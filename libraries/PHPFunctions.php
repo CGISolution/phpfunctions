@@ -364,11 +364,11 @@ class PHPFunctions
 
 				if ($ext == 'JS')
 				{
-					$scripts[] = $this->_buildJsScript($file, $path, $type, $min);
+					$scripts[] = $this->_buildJsScript($file, $path, $type, $min, $method);
 				}
 				else if ($ext == 'CSS')
 				{
-					$scripts[] = $this->_buildCssScript($file, $path, $min);		
+					$scripts[] = $this->_buildCssScript($file, $path, $min, $method);
 				}
 			}
 		}
@@ -380,11 +380,11 @@ class PHPFunctions
 				
 				if ($ext == 'JS')
 				{
-					$scripts[] = $this->_buildJsScript($file, $path, $type, $min);
+					$scripts[] = $this->_buildJsScript($file, $path, $type, $min, $method);
 				}
 				else if ($ext == 'CSS')
 				{
-					$scripts[] = $this->_buildCssScript($file, $path, $min);					
+					$scripts[] = $this->_buildCssScript($file, $path, $min, $method);			
 				}
 			}
 		}
