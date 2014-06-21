@@ -37,6 +37,9 @@ class PHPFunctions
 		
     function __construct ($args)
     {
+    	//if (!function_exists('curl_version')) throw new Exception("Curl is required for this library");
+    	//if (version_compare(PHP_VERSION, '5.3.0', '<')) throw new Exception("PHPFunctions requires PHP 5.3.x or greater");
+    	
 		$this->minscripts = array();
 
 		$this->min_version = $args['min_version'];
