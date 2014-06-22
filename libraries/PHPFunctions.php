@@ -352,7 +352,7 @@ class PHPFunctions
 		return $return;
 	}
 
-	public function minFiles ($files, $path, $type = 'text/javascript', $min = true, $method = 'f')
+	public function minFiles ($files, $path, $type = 'text/javascript', $min = true, $method = 'f', $rel = 'stylesheet')
 	{
 		if (empty($files)) throw new Exception("No Files to minify");
 		if (empty($path)) throw new Exception("Path is empty!");
@@ -371,7 +371,7 @@ class PHPFunctions
 				}
 				else if ($ext == 'CSS')
 				{
-					$scripts[] = $this->_buildCssScript($file, $path, $min, $method);
+					$scripts[] = $this->_buildCssScript($file, $path, $min, $method, $rel);
 				}
 			}
 		}
@@ -387,7 +387,7 @@ class PHPFunctions
 				}
 				else if ($ext == 'CSS')
 				{
-					$scripts[] = $this->_buildCssScript($file, $path, $min, $method);			
+					$scripts[] = $this->_buildCssScript($file, $path, $min, $method, $rel);			
 				}
 			}
 		}
@@ -472,7 +472,7 @@ class PHPFunctions
     	return  "<script {$type}src='{$src}'></script>";
     }
     
-    public function cssScript ($name, $path = null, $min = true, $method = 'f')
+    public function cssScript ($name, $path = null, $min = true, $method = 'f', $rel = 'stylesheet')
     {
     	if (empty($path)) $path = 'public' . DS . 'css' . DS;
     	
@@ -486,7 +486,7 @@ class PHPFunctions
 			{
 					foreach ($name as $k => $file)
 					{
-						$scripts[] = $this->_buildCssScript($file, $path, $min, $method);						
+						$scripts[] = $this->_buildCssScript($file, $path, $min, $method, $rel);						
 					}
 			}
 		}
@@ -494,7 +494,7 @@ class PHPFunctions
 		{
 			foreach (explode(' ', $name) as $k => $file)
 			{
-				$scripts[] = $this->_buildCssScript($file, $path, $min, $method);
+				$scripts[] = $this->_buildCssScript($file, $path, $min, $method, $rel);
 			}	
 		}
 		
@@ -502,7 +502,7 @@ class PHPFunctions
     }
     
     // builds actual HTML string for Css scripts
-    protected function _buildCssScript ($name, $path = null, $min = true, $method = 'f')
+    protected function _buildCssScript ($name, $path = null, $min = true, $method = 'f', $rel)
     {
     	if (empty($path)) $path = 'public' . DS . 'css' . DS;
     	
@@ -523,8 +523,12 @@ class PHPFunctions
 	    	$this->minscripts[] = $src;
 	    	return '';
     	}
+    	
+    	$type = " type='text/css'";
+    	
+    	if ($rel == 'stylesheet/less') $type = null;
 		
-	    return "<link rel='stylesheet' type='text/css' href='{$src}' />";	    
+	    return "<link rel='{$rel}'{$type} href='{$src}' />";	    
     }
 
 
