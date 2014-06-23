@@ -547,4 +547,141 @@ class PHPFunctions
         
 		return true;
 	}
+	
+	/*
+	* @param $path String: /var/www
+	* @param $recursive Boolean - deafault true: should the function recursively scan directories
+	* @param $files Boolean - default true: should results include files
+	* @param $dirs Boolean - default true: should results include directories
+	* @param $exclusiveExt Array - Default Null: Array of Extensions you only want returned
+	* @param $ul - return HTML UL with LI's 
+
+	* @return String/Array
+	*/
+	public function getDirContents ($path, $recursive = true, $files = true, $dirs = true, $includeHiddenFiles = true, $exclusiveExt = null, $cnt = 1)
+	{
+		if (empty($path)) throw new Exception("Path is empty!");
+		
+		$path = rtrim($path, '/') . '/';
+		
+		$currentFolder = basename($path) . EOL;
+		
+		
+		$handle = opendir($path);
+		
+		if ($handle === false) throw new Exception("Unable to open directory: {$path}");
+
+		
+		$content = array();
+		
+		// ensures array of extensions is uppercase for the function				
+		if (!empty($exclusiveExt) && is_array($exclusiveExt)) $exclusiveExt = array_map('strtoupper', $exclusiveExt);
+
+			//foreach ($files as $el)
+			while (false !== ($el = readdir($handle)))
+			{
+
+				if ($el == '.' || $el == '..') continue;
+				
+				$fullPath = $path  . $el;
+				
+				// if they aren ot pulling directories, skips it
+				if (is_dir($fullPath) && $dirs == false) continue;
+				
+				if (is_file($fullPath) && $files == false) continue;
+				
+				if (!$includeHiddenFiles)
+				{
+					// checks if hidden file
+					$hidden = (substr($el, 0, 1) == '.')  ? true : false;
+
+					if ($hidden) continue;
+				}
+
+				// checks of excluded file
+				if (!empty($exclusiveExt) && is_array($exclusiveExt) && !is_dir($fullPath))
+				{
+					$ext = PHPFunctions::getFileExt($el);
+					
+					if (!in_array($ext, $exclusiveExt)) continue;
+					
+				}
+
+
+				if (is_dir($fullPath))
+				{
+					if ($recursive)
+					{
+						$subContent = $this->getDirContents($fullPath, $recursive, $files, $dirs, $includeHiddenFiles, $exclusiveExt, $cnt++);				
+						
+						if (!empty($subContent)) $content[$el] = $subContent;
+					}
+
+				}
+				else $content[] = $el;
+			} // end loop
+	
+		
+		@closedir($handle); // closes directory
+		
+		return $content;
+	}
+	
+	/**
+	
+		* @param $params array - $Array
+			(
+				'ul' => array('id' => 'files', 'class' => 'ul-class'),
+				'li => array('id' => 'liID', 'class' => 'li-class')	
+			)
+	*
+	*/
+	public static function buildDirectoryUL ($dirArray, $path = null, $htmlParams = null, $cnt = 1)
+	{
+		if (empty($dirArray)) return false;
+		
+		$html .= "<ul";
+			
+		if ($cnt == 1)
+		{
+			if (!empty($htmlParams['ul']['id'])) $html .= " id='{$htmlParams['ul']['id']}'";
+			if (!empty($htmlParams['ul']['class'])) $html .= " class='{$htmlParams['ul']['class']}'";					
+		}
+		
+		$html .= ">" . PHP_EOL;
+		
+		foreach ($dirArray as $k => $v)
+		{
+			$html .= str_repeat("\t", $cnt);
+			
+			if (is_array($v)) $dataFile = $path;			
+			else  $dataFile = $path . $v;		
+				
+			$html .= "<li data-file=\"{$dataFile}\"";
+
+
+			if (!empty($htmlParams['li']['id'])) $html .= " id='{$htmlParams['li']['id']}'";
+			if (!empty($htmlParams['li']['class'])) $html .= " class='{$htmlParams['li']['class']}'";
+			
+			$html .= ">";
+			
+			if (is_numeric($k))
+			{
+				$html .= "{$v}";	
+			}
+			else
+			{
+				$html .= $k;
+				
+				$cnt++;
+				if (is_array($v) && !empty($v)) $html .= self::buildDirectoryUL($dirArray[$k], $path .$k . '/', $htmlParams, $cnt);
+
+			}
+			
+			$html .= "</li>" . PHP_EOL;
+		}
+		$html .= PHP_EOL . str_repeat("\t", $cnt - 1) . "</ul>" . PHP_EOL;
+		
+		return $html;
+	}
 }
