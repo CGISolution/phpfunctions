@@ -657,11 +657,17 @@ class PHPFunctions
 			if (is_array($v)) $dataFile = $path;			
 			else  $dataFile = $path . $v;		
 				
-			$html .= "<li data-file=\"{$dataFile}\"";
 
+			$html .= "<li data-href=\"{$dataFile}\" class='";
 
+			if (!empty($htmlParams['li']['class'])) $html .= $htmlParams['li']['class'];
+			
+			if (!is_numeric($k)) $html .= 'folder unselectable';
+			
+			$html .= "'";
+			
 			if (!empty($htmlParams['li']['id'])) $html .= " id='{$htmlParams['li']['id']}'";
-			if (!empty($htmlParams['li']['class'])) $html .= " class='{$htmlParams['li']['class']}'";
+
 			
 			$html .= ">";
 			
@@ -683,5 +689,116 @@ class PHPFunctions
 		$html .= PHP_EOL . str_repeat("\t", $cnt - 1) . "</ul>" . PHP_EOL;
 		
 		return $html;
+	}
+	
+	public static function getFileContent ($file, $path = '.')
+	{
+		$file = $path . $file;
+		
+		if (!file_exists($file)) throw new Exception("{$file} does not exist!");
+		
+		if (!is_file($file)) throw new Exception("{$file} is not a file!");
+		
+		$contents = file_get_contents($file);
+		
+		if ($contents === false) throw new Exception("Unable to get contents {$file}");
+		
+		return $contents;
+	}
+	
+	public static function getJSFunctions ($jsFileContent)
+	{
+		$needle = 'function';
+		//$hay = strtolower($jsFileContent);
+	
+		$jsFileContent = PHPFunctions::stripComments($jsFileContent);
+		
+
+			
+		$jsFileContent = str_ireplace('function (', 'function(', $jsFileContent);
+		$jsFileContent = str_ireplace('if (', 'if(', $jsFileContent);
+		$jsFileContent = str_replace(';', '', $jsFileContent);
+		
+		// /[0-9a-z]((.|,|:)[0-9a-z]){0,10}/   for css
+					
+		$patterns = array
+		(
+			'#if\(.*?\){0,10}.+#',
+
+			
+			'#\{(.*?)\}.*?#s',
+			'#^\$.*?;.*?#',
+
+			//'#).*?}.+#',
+			//s'#function\(.+?\).+?;#s'
+		);
+	
+		$jsFileContent = preg_replace($patterns, '', $jsFileContent);	
+	
+
+		#$jsFileContent = str_replace('};', '', $jsFileContent);
+		#$jsFileContent = str_replace('}', '', $jsFileContent);
+			
+		echo $jsFileContent;
+exit;
+		$chunks = explode('function', $jsFileContent);
+		
+		if (!empty($chunks))
+		{
+			foreach ($chunks as $k => $txt)
+			{
+				if ($k == 0)
+				{
+					$firstChar = substr(trim($txt), 0, 1);
+					
+				}
+				else
+				{
+					
+				}
+				echo $txt;
+			}
+		}
+exit;
+
+
+		for ($i = 0; $i <= substr_count($hay, $needle); $i++)
+		{
+			if (empty($i)) $prePos = 0;
+			
+			
+			$position = strpos($hay, $need, $prePos);
+			
+			$prePos = $position;
+		
+			$prev = stristr($hay, $needle, true);
+
+			$after = stristr($hay, $needle);		
+			
+			
+			$afterSub = substr($after, 0, strpos($after, '{'));
+			
+			
+			echo $afterSub;
+			break;
+			
+		
+			//$prevCheck = substr($jsFileContent, $position - (strripos($jsFileContent, $position));
+		
+			echo $prevCheck . PHP_EOL;
+		}
+	}
+	
+	public static function stripComments ($content)
+	{
+		$patterns = array
+		(
+			'#^\s*//.+$#m',
+			'#/\*.+?\*/#s',
+		);
+	
+		$content = preg_replace($patterns, '', $content);
+		
+		return $content;
 	}
 }
