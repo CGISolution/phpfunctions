@@ -41,9 +41,55 @@ class PHPFunctions
     	//if (version_compare(PHP_VERSION, '5.3.0', '<')) throw new Exception("PHPFunctions requires PHP 5.3.x or greater");
     	
 		$this->minscripts = array();
-
+		$this->mincss = array();
+		
 		$this->min_version = $args['min_version'];
 		$this->min_debug = $args['min_debug'];
+		
+		// checks include path
+		self::_checkIncludePath($_SERVER['DOCUMENT_ROOT']);
+    }
+    
+    /**
+    * checks if a path has been included into the include path
+    * if not adds it
+    */
+    private static function _checkIncludePath ($path)
+    {
+    	$path = self::checkPathSeparator($path);
+    	    	
+    	$paths = explode(PATH_SEPARATOR, get_include_path());
+    	
+    	$hasPath = false;
+    	
+    	if (!empty($paths) && is_array($paths))
+    	{
+	    	foreach ($paths as $ip)
+	    	{
+	    		$ip = self::checkPathSeparator($ip);
+	    		
+	    		if ($ip == $path)
+	    		{
+		    		$hasPath = true;
+		    		break;
+	    		}
+	    	}
+    	}
+    	
+    	if (!$hasPath)
+    	{
+    		$set = set_include_path(get_include_path() . PATH_SEPARATOR . $path);
+    		
+    		if ($set === false) throw new Exception("Unable to set include path!");
+		}
+		    	
+		return true;
+    }
+    
+    // will ensure path ends in directory separator
+    public static function checkPathSeparator ($path)
+    {
+	 	return rtrim($path, '/') . DIRECTORY_SEPARATOR;   
     }
 
 	public function setMinVersion ($version, $debug = false)
@@ -518,9 +564,9 @@ class PHPFunctions
    		}
 		else $src = $path . $name;
 		
-    	if (DYNAMIC) 
+    	if (isset($_GET['dynamic'])) 
     	{
-	    	$this->minscripts[] = $src;
+	    	$this->mincss[] = $src;
 	    	return '';
     	}
     	
@@ -801,4 +847,101 @@ exit;
 		
 		return $content;
 	}
+	
+	/**
+	* @param $folders array() - array('public/uploads', 'path/to/check/)
+	* checks to ensure folders exist, and have the proper permissions
+	* if not it wil create and give them proper permissions
+	*/
+	public function checkFolders ($folders)
+	{
+		if (!empty($folders) && is_array($folders))
+		{
+			foreach ($folders as $k => $folder)
+			{
+				// check if directory exists
+				if (!file_exists($folder))
+				{
+					self::createDir($folder);
+					
+				}
+				
+				$permissions = self::filePermissions($folder);
+				
+				if ($permissions !== 'drwxrwxrwx')
+				{
+					// atempt to set permissions for path
+					$chmod = chmod($folder, 0777);
+					
+					// was unable to set permissions
+					if ($chmod === false) throw new Exception("Unable to set permssions for {$folder}. Run the following command to fix: chmod -R 777 {$path}");
+				}
+				
+			}
+		}
+		
+		return true;
+	}
+
+    /**
+	 * gets permssions of a specific path
+     *
+     * @param string $path - /var/www 
+     *
+     * @return String : example: drwxrwxrwx
+     */
+    public static function filePermissions ($path)
+    {
+        $perms = fileperms($path);
+
+        if (($perms & 0xC000) == 0xC000) {
+            // Socket
+            $info = 's';
+        } elseif (($perms & 0xA000) == 0xA000) {
+            // Symbolic Link
+            $info = 'l';
+        } elseif (($perms & 0x8000) == 0x8000) {
+            // Regular
+            $info = '-';
+        } elseif (($perms & 0x6000) == 0x6000) {
+            // Block special
+            $info = 'b';
+        } elseif (($perms & 0x4000) == 0x4000) {
+            // Directory
+            $info = 'd';
+        } elseif (($perms & 0x2000) == 0x2000) {
+            // Character special
+            $info = 'c';
+        } elseif (($perms & 0x1000) == 0x1000) {
+            // FIFO pipe
+            $info = 'p';
+        } else {
+            // Unknown
+            $info = 'u';
+        }
+
+        // Owner
+        $info .= (($perms & 0x0100) ? 'r' : '-');
+        $info .= (($perms & 0x0080) ? 'w' : '-');
+        $info .= (($perms & 0x0040) ?
+                    (($perms & 0x0800) ? 's' : 'x' ) :
+                    (($perms & 0x0800) ? 'S' : '-'));
+
+        // Group
+        $info .= (($perms & 0x0020) ? 'r' : '-');
+        $info .= (($perms & 0x0010) ? 'w' : '-');
+        $info .= (($perms & 0x0008) ?
+                    (($perms & 0x0400) ? 's' : 'x' ) :
+                    (($perms & 0x0400) ? 'S' : '-'));
+
+        // World
+        $info .= (($perms & 0x0004) ? 'r' : '-');
+        $info .= (($perms & 0x0002) ? 'w' : '-');
+        $info .= (($perms & 0x0001) ?
+                    (($perms & 0x0200) ? 't' : 'x' ) :
+                    (($perms & 0x0200) ? 'T' : '-'));
+
+					
+		return $info;
+    }
 }
