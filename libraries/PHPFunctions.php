@@ -577,6 +577,18 @@ class PHPFunctions
 	    return "<link rel='{$rel}'{$type} href='{$src}' />";	    
     }
 
+	public function minSrc ($src)
+	{
+	   	if ($min)
+   		{
+			$version = ($this->min_version) ? '&amp;' . $this->min_version : null;
+			$debug = ($this->min_debug) ? '&amp;debug' : null;
+			
+			$src .= "{$debug}{$version}";
+   		}
+   		
+   		return $src;
+	}
 
 	/*
 	* general stack trace to error log
