@@ -16,7 +16,7 @@ $hook['pre_system'] = array(
                     'function' => 'initialize',
                     'filename' => 'CI_less_pre_sys',
                     'filepath' => 'third_party/phpfunctions/hooks',
-                    'params'   => array()
+                    'params'   => array('public/less/', array('main.less' => 'main.css'))
                     );
 
 /* End of file hooks.php */

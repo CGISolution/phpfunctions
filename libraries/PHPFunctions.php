@@ -577,7 +577,7 @@ class PHPFunctions
 	    return "<link rel='{$rel}'{$type} href='{$src}' />";	    
     }
 
-	public function minSrc ($src)
+	public function minSrc ($src, $min = true)
 	{
 	   	if ($min)
    		{
@@ -879,14 +879,14 @@ exit;
 				}
 				
 				$permissions = self::filePermissions($folder);
-				
+
 				if ($permissions !== 'drwxrwxrwx')
 				{
 					// atempt to set permissions for path
 					$chmod = chmod($folder, 0777);
 					
 					// was unable to set permissions
-					if ($chmod === false) throw new Exception("Unable to set permssions for {$folder}. Run the following command to fix: chmod -R 777 {$path}");
+					if ($chmod === false) throw new Exception("Unable to set permissions for {$folder}. \n\n<br><br><b>Execute</b> the following command to fix: <code>chmod -R 777 {$_SERVER['DOCUMENT_ROOT']}{$folder}</code>\n\n");
 				}
 				
 			}
