@@ -25,7 +25,9 @@
  *  SOFTWARE.
  *
  */
- 
+
+
+if (!defined('DYNAMIC')) define('DYNAMIC', false);
  
 class PHPFunctions
 {
@@ -35,10 +37,59 @@ class PHPFunctions
 		
     function __construct ($args)
     {
+    	//if (!function_exists('curl_version')) throw new Exception("Curl is required for this library");
+    	//if (version_compare(PHP_VERSION, '5.3.0', '<')) throw new Exception("PHPFunctions requires PHP 5.3.x or greater");
+    	
 		$this->minscripts = array();
-
+		$this->mincss = array();
+		
 		$this->min_version = $args['min_version'];
 		$this->min_debug = $args['min_debug'];
+		
+		// checks include path
+		self::_checkIncludePath($_SERVER['DOCUMENT_ROOT']);
+    }
+    
+    /**
+    * checks if a path has been included into the include path
+    * if not adds it
+    */
+    private static function _checkIncludePath ($path)
+    {
+    	$path = self::checkPathSeparator($path);
+    	    	
+    	$paths = explode(PATH_SEPARATOR, get_include_path());
+    	
+    	$hasPath = false;
+    	
+    	if (!empty($paths) && is_array($paths))
+    	{
+	    	foreach ($paths as $ip)
+	    	{
+	    		$ip = self::checkPathSeparator($ip);
+	    		
+	    		if ($ip == $path)
+	    		{
+		    		$hasPath = true;
+		    		break;
+	    		}
+	    	}
+    	}
+    	
+    	if (!$hasPath)
+    	{
+    		$set = set_include_path(get_include_path() . PATH_SEPARATOR . $path);
+    		
+    		if ($set === false) throw new Exception("Unable to set include path!");
+		}
+		    	
+		return true;
+    }
+    
+    // will ensure path ends in directory separator
+    public static function checkPathSeparator ($path)
+    {
+	 	return rtrim($path, '/') . DIRECTORY_SEPARATOR;   
     }
 
 	public function setMinVersion ($version, $debug = false)
@@ -347,7 +398,7 @@ class PHPFunctions
 		return $return;
 	}
 
-	public function minFiles ($files, $path, $type = 'text/javascript', $min = true, $method = 'f')
+	public function minFiles ($files, $path, $type = 'text/javascript', $min = true, $method = 'f', $rel = 'stylesheet')
 	{
 		if (empty($files)) throw new Exception("No Files to minify");
 		if (empty($path)) throw new Exception("Path is empty!");
@@ -362,11 +413,11 @@ class PHPFunctions
 
 				if ($ext == 'JS')
 				{
-					$scripts[] = $this->_buildJsScript($file, $path, $type, $min);
+					$scripts[] = $this->_buildJsScript($file, $path, $type, $min, $method);
 				}
 				else if ($ext == 'CSS')
 				{
-					$scripts[] = $this->_buildCssScript($file, $path, $min);		
+					$scripts[] = $this->_buildCssScript($file, $path, $min, $method, $rel);
 				}
 			}
 		}
@@ -378,11 +429,11 @@ class PHPFunctions
 				
 				if ($ext == 'JS')
 				{
-					$scripts[] = $this->_buildJsScript($file, $path, $type, $min);
+					$scripts[] = $this->_buildJsScript($file, $path, $type, $min, $method);
 				}
 				else if ($ext == 'CSS')
 				{
-					$scripts[] = $this->_buildCssScript($file, $path, $min);					
+					$scripts[] = $this->_buildCssScript($file, $path, $min, $method, $rel);			
 				}
 			}
 		}
@@ -418,17 +469,18 @@ class PHPFunctions
 		}
 		else
 		{
+
 			foreach (explode(' ', $name) as $k => $file)
 			{
 				$scripts[] = $this->_buildJsScript($file, $path, $type, $min, $method);
 			}	
 		}
-		
+
 		return PHP_EOL . implode(PHP_EOL, $scripts) . PHP_EOL;
     }
     
     // builds actual HTML string for javascript
-    private function _buildJsScript ($name, $path = null, $type = 'text/javascript', $min = true, $method = 'f')
+    protected function _buildJsScript ($name, $path = null, $type = 'text/javascript', $min = true, $method = 'f')
     {
     	if (empty($path)) $path = 'public' . DS . 'js' . DS;
 
@@ -437,7 +489,7 @@ class PHPFunctions
     	if ($httpCheck === false)
     	{
 
-    		if (!file_exists($path . $name)) return false;
+    		//if (!file_exists($path . $name)) return false;
 		
 			if ($min)
 			{
@@ -445,7 +497,7 @@ class PHPFunctions
 			$version = ($this->min_version) ? '&amp;' . $this->min_version : null;
 			$debug = ($this->min_debug) ? '&amp;debug' : null;
 				
-				$src = "/min/?{$method}={$path}{$name}{$debug}{$version}";	
+				$src = "/min/?{$method}={$path}{$name}{$debug}{$version}";
 			} 
 			else $src = $path . $name;
 		}
@@ -453,7 +505,7 @@ class PHPFunctions
 		{
 			$src = $name; 
 		}
-		
+
 		if (!empty($type)) $type = "type='{$type}' ";
 		
     	if (DYNAMIC) 
@@ -461,11 +513,12 @@ class PHPFunctions
 	    	$this->minscripts[] = $src;
 	    	return '';
     	}
-    	
+   	
+
     	return  "<script {$type}src='{$src}'></script>";
     }
     
-    public function cssScript ($name, $path = null, $min = true, $method = 'f')
+    public function cssScript ($name, $path = null, $min = true, $method = 'f', $rel = 'stylesheet')
     {
     	if (empty($path)) $path = 'public' . DS . 'css' . DS;
     	
@@ -479,7 +532,7 @@ class PHPFunctions
 			{
 					foreach ($name as $k => $file)
 					{
-						$scripts[] = $this->_buildCssScript($file, $path, $min, $method);						
+						$scripts[] = $this->_buildCssScript($file, $path, $min, $method, $rel);						
 					}
 			}
 		}
@@ -487,7 +540,7 @@ class PHPFunctions
 		{
 			foreach (explode(' ', $name) as $k => $file)
 			{
-				$scripts[] = $this->_buildCssScript($file, $path, $min, $method);
+				$scripts[] = $this->_buildCssScript($file, $path, $min, $method, $rel);
 			}	
 		}
 		
@@ -495,12 +548,12 @@ class PHPFunctions
     }
     
     // builds actual HTML string for Css scripts
-    private function _buildCssScript ($name, $path = null, $min = true, $method = 'f')
+    protected function _buildCssScript ($name, $path = null, $min = true, $method = 'f', $rel)
     {
     	if (empty($path)) $path = 'public' . DS . 'css' . DS;
     	
 		// checks if file eixsts
-		if (!file_exists($path . $name)) return false;
+		//if (!file_exists($path . $name)) return false;
    		
    		if ($min)
    		{
@@ -511,13 +564,396 @@ class PHPFunctions
    		}
 		else $src = $path . $name;
 		
-    	if (DYNAMIC) 
+    	if (isset($_GET['dynamic'])) 
     	{
-	    	$this->minscripts[] = $src;
+	    	$this->mincss[] = $src;
 	    	return '';
     	}
+    	
+    	$type = " type='text/css'";
+    	
+    	if ($rel == 'stylesheet/less') $type = null;
 		
-	    return "<link rel='stylesheet' type='text/css' href='{$src}' />";	    
+	    return "<link rel='{$rel}'{$type} href='{$src}' />";	    
     }
 
+	public function minSrc ($src, $min = true)
+	{
+	   	if ($min)
+   		{
+			$version = ($this->min_version) ? '&amp;' . $this->min_version : null;
+			$debug = ($this->min_debug) ? '&amp;debug' : null;
+			
+			$src .= "{$debug}{$version}";
+   		}
+   		
+   		return $src;
+	}
+
+	/*
+	* general stack trace to error log
+	*/
+    public static function sendStackTrace($e)
+    {
+        $body = "Stack Trace Error:\n\n";
+        $body .= "URL: {$_SERVER["SERVER_NAME"]}{$_SERVER["REQUEST_URI"]}\n";
+        $body .= "Referer: {$_SERVER['HTTP_REFERER']}\n";
+        $body .= "Message: " . $e->getMessage() . "\n\n";
+        $body .= $e;
+
+        error_log($body);
+        
+		return true;
+	}
+	
+	/*
+	* @param $path String: /var/www
+	* @param $recursive Boolean - deafault true: should the function recursively scan directories
+	* @param $files Boolean - default true: should results include files
+	* @param $dirs Boolean - default true: should results include directories
+	* @param $exclusiveExt Array - Default Null: Array of Extensions you only want returned
+	* @param $ul - return HTML UL with LI's 
+
+	* @return String/Array
+	*/
+	public function getDirContents ($path, $recursive = true, $files = true, $dirs = true, $includeHiddenFiles = true, $exclusiveExt = null, $cnt = 1)
+	{
+		if (empty($path)) throw new Exception("Path is empty!");
+		
+		$path = rtrim($path, '/') . '/';
+		
+		$currentFolder = basename($path) . EOL;
+		
+		
+		$handle = opendir($path);
+		
+		if ($handle === false) throw new Exception("Unable to open directory: {$path}");
+
+		
+		$content = array();
+		
+		// ensures array of extensions is uppercase for the function				
+		if (!empty($exclusiveExt) && is_array($exclusiveExt)) $exclusiveExt = array_map('strtoupper', $exclusiveExt);
+
+			//foreach ($files as $el)
+			while (false !== ($el = readdir($handle)))
+			{
+
+				if ($el == '.' || $el == '..') continue;
+				
+				$fullPath = $path  . $el;
+				
+				// if they aren ot pulling directories, skips it
+				if (is_dir($fullPath) && $dirs == false) continue;
+				
+				if (is_file($fullPath) && $files == false) continue;
+				
+				if (!$includeHiddenFiles)
+				{
+					// checks if hidden file
+					$hidden = (substr($el, 0, 1) == '.')  ? true : false;
+
+					if ($hidden) continue;
+				}
+
+				// checks of excluded file
+				if (!empty($exclusiveExt) && is_array($exclusiveExt) && !is_dir($fullPath))
+				{
+					$ext = PHPFunctions::getFileExt($el);
+					
+					if (!in_array($ext, $exclusiveExt)) continue;
+					
+				}
+
+
+				if (is_dir($fullPath))
+				{
+					if ($recursive)
+					{
+						$subContent = $this->getDirContents($fullPath, $recursive, $files, $dirs, $includeHiddenFiles, $exclusiveExt, $cnt++);				
+						
+						if (!empty($subContent)) $content[$el] = $subContent;
+					}
+
+				}
+				else $content[] = $el;
+			} // end loop
+	
+		
+		@closedir($handle); // closes directory
+		
+		return $content;
+	}
+	
+	/**
+	
+		* @param $params array - $Array
+			(
+				'ul' => array('id' => 'files', 'class' => 'ul-class'),
+				'li => array('id' => 'liID', 'class' => 'li-class')	
+			)
+	*
+	*/
+	public static function buildDirectoryUL ($dirArray, $path = null, $htmlParams = null, $cnt = 1)
+	{
+		if (empty($dirArray)) return false;
+		
+		$html .= "<ul";
+			
+		if ($cnt == 1)
+		{
+			if (!empty($htmlParams['ul']['id'])) $html .= " id='{$htmlParams['ul']['id']}'";
+			if (!empty($htmlParams['ul']['class'])) $html .= " class='{$htmlParams['ul']['class']}'";					
+		}
+		
+		$html .= ">" . PHP_EOL;
+		
+		foreach ($dirArray as $k => $v)
+		{
+			$html .= str_repeat("\t", $cnt);
+			
+			if (is_array($v)) $dataFile = $path;			
+			else  $dataFile = $path . $v;		
+				
+
+			$html .= "<li data-href=\"{$dataFile}\" class='";
+
+			if (!empty($htmlParams['li']['class'])) $html .= $htmlParams['li']['class'];
+			
+			if (!is_numeric($k)) $html .= 'folder unselectable';
+			
+			$html .= "'";
+			
+			if (!empty($htmlParams['li']['id'])) $html .= " id='{$htmlParams['li']['id']}'";
+
+			
+			$html .= ">";
+			
+			if (is_numeric($k))
+			{
+				$html .= "{$v}";	
+			}
+			else
+			{
+				$html .= $k;
+				
+				$cnt++;
+				if (is_array($v) && !empty($v)) $html .= self::buildDirectoryUL($dirArray[$k], $path .$k . '/', $htmlParams, $cnt);
+
+			}
+			
+			$html .= "</li>" . PHP_EOL;
+		}
+		$html .= PHP_EOL . str_repeat("\t", $cnt - 1) . "</ul>" . PHP_EOL;
+		
+		return $html;
+	}
+	
+	public static function getFileContent ($file, $path = '.')
+	{
+		$file = $path . $file;
+		
+		if (!file_exists($file)) throw new Exception("{$file} does not exist!");
+		
+		if (!is_file($file)) throw new Exception("{$file} is not a file!");
+		
+		$contents = file_get_contents($file);
+		
+		if ($contents === false) throw new Exception("Unable to get contents {$file}");
+		
+		return $contents;
+	}
+	
+	public static function getJSFunctions ($jsFileContent)
+	{
+		$needle = 'function';
+		//$hay = strtolower($jsFileContent);
+	
+		$jsFileContent = PHPFunctions::stripComments($jsFileContent);
+		
+
+			
+		$jsFileContent = str_ireplace('function (', 'function(', $jsFileContent);
+		$jsFileContent = str_ireplace('if (', 'if(', $jsFileContent);
+		$jsFileContent = str_replace(';', '', $jsFileContent);
+		
+		// /[0-9a-z]((.|,|:)[0-9a-z]){0,10}/   for css
+					
+		$patterns = array
+		(
+			'#if\(.*?\){0,10}.+#',
+
+			
+			'#\{(.*?)\}.*?#s',
+			'#^\$.*?;.*?#',
+
+			//'#).*?}.+#',
+			//s'#function\(.+?\).+?;#s'
+		);
+	
+		$jsFileContent = preg_replace($patterns, '', $jsFileContent);	
+	
+
+		#$jsFileContent = str_replace('};', '', $jsFileContent);
+		#$jsFileContent = str_replace('}', '', $jsFileContent);
+			
+		echo $jsFileContent;
+exit;
+		$chunks = explode('function', $jsFileContent);
+		
+		if (!empty($chunks))
+		{
+			foreach ($chunks as $k => $txt)
+			{
+				if ($k == 0)
+				{
+					$firstChar = substr(trim($txt), 0, 1);
+					
+				}
+				else
+				{
+					
+				}
+				echo $txt;
+			}
+		}
+exit;
+
+
+		for ($i = 0; $i <= substr_count($hay, $needle); $i++)
+		{
+			if (empty($i)) $prePos = 0;
+			
+			
+			$position = strpos($hay, $need, $prePos);
+			
+			$prePos = $position;
+		
+			$prev = stristr($hay, $needle, true);
+
+			$after = stristr($hay, $needle);		
+			
+			
+			$afterSub = substr($after, 0, strpos($after, '{'));
+			
+			
+			echo $afterSub;
+			break;
+			
+		
+			//$prevCheck = substr($jsFileContent, $position - (strripos($jsFileContent, $position));
+		
+			echo $prevCheck . PHP_EOL;
+		}
+	}
+	
+	public static function stripComments ($content)
+	{
+		$patterns = array
+		(
+			'#^\s*//.+$#m',
+			'#/\*.+?\*/#s',
+		);
+	
+		$content = preg_replace($patterns, '', $content);
+		
+		return $content;
+	}
+	
+	/**
+	* @param $folders array() - array('public/uploads', 'path/to/check/)
+	* checks to ensure folders exist, and have the proper permissions
+	* if not it wil create and give them proper permissions
+	*/
+	public function checkFolders ($folders)
+	{
+		if (!empty($folders) && is_array($folders))
+		{
+			foreach ($folders as $k => $folder)
+			{
+				// check if directory exists
+				if (!file_exists($folder))
+				{
+					self::createDir($folder);
+					
+				}
+				
+				$permissions = self::filePermissions($folder);
+
+				if ($permissions !== 'drwxrwxrwx')
+				{
+					// atempt to set permissions for path
+					$chmod = chmod($folder, 0777);
+					
+					// was unable to set permissions
+					if ($chmod === false) throw new Exception("Unable to set permissions for {$folder}. \n\n<br><br><b>Execute</b> the following command to fix: <code>chmod -R 777 {$_SERVER['DOCUMENT_ROOT']}{$folder}</code>\n\n");
+				}
+				
+			}
+		}
+		
+		return true;
+	}
+
+    /**
+	 * gets permssions of a specific path
+     *
+     * @param string $path - /var/www 
+     *
+     * @return String : example: drwxrwxrwx
+     */
+    public static function filePermissions ($path)
+    {
+        $perms = fileperms($path);
+
+        if (($perms & 0xC000) == 0xC000) {
+            // Socket
+            $info = 's';
+        } elseif (($perms & 0xA000) == 0xA000) {
+            // Symbolic Link
+            $info = 'l';
+        } elseif (($perms & 0x8000) == 0x8000) {
+            // Regular
+            $info = '-';
+        } elseif (($perms & 0x6000) == 0x6000) {
+            // Block special
+            $info = 'b';
+        } elseif (($perms & 0x4000) == 0x4000) {
+            // Directory
+            $info = 'd';
+        } elseif (($perms & 0x2000) == 0x2000) {
+            // Character special
+            $info = 'c';
+        } elseif (($perms & 0x1000) == 0x1000) {
+            // FIFO pipe
+            $info = 'p';
+        } else {
+            // Unknown
+            $info = 'u';
+        }
+
+        // Owner
+        $info .= (($perms & 0x0100) ? 'r' : '-');
+        $info .= (($perms & 0x0080) ? 'w' : '-');
+        $info .= (($perms & 0x0040) ?
+                    (($perms & 0x0800) ? 's' : 'x' ) :
+                    (($perms & 0x0800) ? 'S' : '-'));
+
+        // Group
+        $info .= (($perms & 0x0020) ? 'r' : '-');
+        $info .= (($perms & 0x0010) ? 'w' : '-');
+        $info .= (($perms & 0x0008) ?
+                    (($perms & 0x0400) ? 's' : 'x' ) :
+                    (($perms & 0x0400) ? 'S' : '-'));
+
+        // World
+        $info .= (($perms & 0x0004) ? 'r' : '-');
+        $info .= (($perms & 0x0002) ? 'w' : '-');
+        $info .= (($perms & 0x0001) ?
+                    (($perms & 0x0200) ? 't' : 'x' ) :
+                    (($perms & 0x0200) ? 'T' : '-'));
+
+					
+		return $info;
+    }
 }
