@@ -181,6 +181,32 @@ class PHPFunctions
     }
     
     /**
+    * creates a file if it does not exist
+    */
+    public static function createFile ($file, $local = true, $permission = 0755)
+    {
+    
+    	if (empty($file)) throw new Exception("File Exists");
+    	
+        if ($local) $file = $_SERVER['DOCUMENT_ROOT'] . $file;
+        	
+        // checks if the file exists
+        $exists = file_exists($file);
+        
+        if ($exists) return $file;
+        
+    	$handle = fopen($file, 'x');
+    	
+    	if ($handle === false) throw new Exception("Unable to create file: {$file}");
+    	
+    	@chmod($file);
+    	
+    	@fclose($handle);
+    	
+    	return $file;
+    }
+    
+    /**
      * Gets youtube Data
      *
      * @param mixed $id         
@@ -955,5 +981,15 @@ exit;
 
 					
 		return $info;
+    }
+    
+    /**
+    * used to redirect
+    * exists to ensure nothing executes after Header Location tag
+    */
+    public static function redirect ($location)
+    {
+	    header("Location: {$location}");
+	    exit;
     }
 }
