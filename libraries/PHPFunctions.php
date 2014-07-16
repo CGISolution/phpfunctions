@@ -181,6 +181,36 @@ class PHPFunctions
     }
     
     /**
+    * deletes all files inside a directory
+    */
+    public static function delDirContent ($path, $recursive = true)
+    {
+    	if (!is_dir($path)) throw new Exception("{$path} is not a directory!");
+    	
+	    $files = scandir($path);
+		
+		foreach ($files as $file)
+		{
+			if ($file == '.' || $file == '..') continue;
+						
+			// checks if content is a directory and if to recursively delete
+			if (is_dir($path . $file) && $recursive)
+			{
+				self::delDirContent($path . $file);
+			}
+			else
+			{
+				$del = unlink($path . $file);
+				
+				if (!$del) throw new Exception("Unable to delete image: {$path}{$file}");					
+			}
+			
+		}
+		
+		return true;
+    }
+    
+    /**
     * creates a file if it does not exist
     */
     public static function createFile ($file, $local = true, $permission = 0755)

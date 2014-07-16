@@ -59,7 +59,7 @@ class CI_less_pre_sys
 	{
 		if (file_exists($output)) @unlink($output); // removes old output file
 		
-		$cmd = "lessc {$file} {$output}";
+		$cmd = "lessc --global-var=\"domain='{$_SERVER['HTTP_HOST']}'\" {$file} {$output}";
 		
 		try
 		{
