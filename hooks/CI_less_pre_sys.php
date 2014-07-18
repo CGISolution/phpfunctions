@@ -43,7 +43,8 @@ class CI_less_pre_sys
 						// if new min version, then it will rebuild
 						// if in dev mode, will recompile the less each page load
 						
-						if (self::_checkRebuild($this->path . $this->lessPath, $this->minv) || $this->env == 'DEVELOPMENT')
+						//if (self::_checkRebuild($this->path . $this->lessPath, $this->minv) || $this->env == 'DEVELOPMENT')
+						if (self::_checkRebuild($this->path . $this->lessPath, $this->minv))
 						{
 							$this->_compileLessFile($lessFullPath, $outputFullPath);
 						}
@@ -61,20 +62,10 @@ class CI_less_pre_sys
 		
 		$cmd = "lessc --global-var=\"domain='{$_SERVER['HTTP_HOST']}'\" {$file} {$output}";
 		
-		try
-		{
-			system($cmd);
-			
-			if (!empty($this->minv)) self::_writeMinV($this->path . $this->lessPath, $this->minv);
-		}
-		catch (Exception $e)
-		{
-			echo "Unable to compile {$file}";
-			echo $e->getMessage() . PHP_EOL;			
-		}
+		system($cmd);
 		
-
-		
+		if (!empty($this->minv)) self::_writeMinV($this->path . $this->lessPath, $this->minv);
+	
 		return true;
 	}
 	
