@@ -181,6 +181,62 @@ class PHPFunctions
     }
     
     /**
+    * deletes all files inside a directory
+    */
+    public static function delDirContent ($path, $recursive = true)
+    {
+    	if (!is_dir($path)) throw new Exception("{$path} is not a directory!");
+    	
+	    $files = scandir($path);
+		
+		foreach ($files as $file)
+		{
+			if ($file == '.' || $file == '..') continue;
+						
+			// checks if content is a directory and if to recursively delete
+			if (is_dir($path . $file) && $recursive)
+			{
+				self::delDirContent($path . $file);
+			}
+			else
+			{
+				$del = unlink($path . $file);
+				
+				if (!$del) throw new Exception("Unable to delete image: {$path}{$file}");					
+			}
+			
+		}
+		
+		return true;
+    }
+    
+    /**
+    * creates a file if it does not exist
+    */
+    public static function createFile ($file, $local = true, $permission = 0755)
+    {
+    
+    	if (empty($file)) throw new Exception("File Exists");
+    	
+        if ($local) $file = $_SERVER['DOCUMENT_ROOT'] . $file;
+        	
+        // checks if the file exists
+        $exists = file_exists($file);
+        
+        if ($exists) return $file;
+        
+    	$handle = fopen($file, 'x');
+    	
+    	if ($handle === false) throw new Exception("Unable to create file: {$file}");
+    	
+    	@chmod($file);
+    	
+    	@fclose($handle);
+    	
+    	return $file;
+    }
+    
+    /**
      * Gets youtube Data
      *
      * @param mixed $id         
@@ -955,5 +1011,15 @@ exit;
 
 					
 		return $info;
+    }
+    
+    /**
+    * used to redirect
+    * exists to ensure nothing executes after Header Location tag
+    */
+    public static function redirect ($location)
+    {
+	    header("Location: {$location}");
+	    exit;
     }
 }
