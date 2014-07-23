@@ -1024,6 +1024,20 @@ exit;
     }
     
     /**
+    * @param $c hexadecimal : #FFFFFF or FFFFFF
+    *
+    * @return boolean - true if hex color
+    */
+    public static function isHexColor ($hex)
+    {
+		$hex = str_replace('#', '', $hex);
+    	
+	 	if (ctype_xdigit($hex) && (strlen($hex) == 6 || strlen($hex) == 3)) return true;
+	 	
+	    return false;
+    }
+    
+    /**
     * converts hex color to RGB
 	* @return object - { r,b,g }
 	*/
