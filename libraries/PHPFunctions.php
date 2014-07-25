@@ -159,17 +159,15 @@ class PHPFunctions
 	* @param String $path - Path to directory to check: Example: application/models/
 	* @param Boolean $local - Optional, defaults true. only create directorys in current document root
 	*/
-	public static function createDir ($path, $local = true)
+	public static function createDir ($path, $local = true, $permissions = 0755)
     {
     	if ($local) $path = $_SERVER['DOCUMENT_ROOT'] . $path;
 
         if (!is_dir($path))
         {
-            $create = mkdir($path, 0777, true);
+            $create = mkdir($path, $permissions, true);
 
-            if ($create === false) throw new exception("Unable to create directory:" . $path);
-            
-            @chmod($path, 0777);
+            if ($create === false) throw new exception("Unable to create directory: " . $path);
         }
         else
         {
