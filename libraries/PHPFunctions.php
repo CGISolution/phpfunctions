@@ -1059,4 +1059,51 @@ exit;
 	   
 	   return array($r, $g, $b);
     }
+    
+    public static function sortByDate ($data, $column, $direction = SORT_ASC)
+    {
+		if (empty($data)) return false;
+		
+		$tmp = array();
+		$return = array();
+		
+		foreach ($data as $k => $r)
+		{
+			$date = (is_array($r)) ? strtotime($r[$column]) : strtotime($r->{$column});
+		
+			$tmp[$k] = $date;
+		}
+		
+		asort($tmp);
+		
+		foreach ($tmp as $k => $v)
+		{
+			$return[$k] = $data[$k];
+		}
+		
+		return $return;
+    }
+    
+	
+	public static function arrayToObject ($array)
+	{
+		if (is_object($array)) return $array;
+		
+		return json_decode(json_encode($array), false);
+	}
+	
+	public static function objectToArray ($object)
+	{
+		if (gettype($object) == 'array') return $object;
+		
+		$encode = json_encode($object);
+		
+		if ($encode === false) throw new Exception("Unable to encode Object\n\n" . $e['message']);
+		
+		$decode = json_decode($encode, true);
+		
+		if ($decode === false) throw new Exception("Unable to decode data to convert to array\n\n" . $e['message']);
+	
+		return $decode;
+	}
 }
