@@ -28,6 +28,8 @@
 
 
 if (!defined('DYNAMIC')) define('DYNAMIC', false);
+
+require_once 'globalFunctions.php';
  
 class PHPFunctions
 {
