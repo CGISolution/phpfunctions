@@ -26,8 +26,9 @@
  *
  */
 
-
 if (!defined('DYNAMIC')) define('DYNAMIC', false);
+
+if (!defined('ENVIRONMENT')) define('ENVIRONMENT', 'development');
 
 require_once 'globalFunctions.php';
  
