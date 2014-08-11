@@ -33,5 +33,10 @@ function ciQuery ()
 
 function println ($string)
 {
-	echo $string . "\r";
+	return print $string . PHP_EOL;
+}
+
+function tprintln ($string, $tabs = 1)
+{
+	return print str_repeat("\t", $tabs) . $string . PHP_EOL;
 }
