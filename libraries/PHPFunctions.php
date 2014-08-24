@@ -37,22 +37,22 @@ class PHPFunctions
 	private $min_version, $min_debug;
 	
 	public $minscripts;
-		
-    function __construct ($args)
+
+    function __construct ($args = array())
     {
-    	//if (!function_exists('curl_version')) throw new Exception("Curl is required for this library");
-    	//if (version_compare(PHP_VERSION, '5.3.0', '<')) throw new Exception("PHPFunctions requires PHP 5.3.x or greater");
-    	
-		$this->minscripts = array();
-		$this->mincss = array();
-		
-		$this->min_version = $args['min_version'];
-		$this->min_debug = $args['min_debug'];
-		
-		// checks include path
-		self::_checkIncludePath($_SERVER['DOCUMENT_ROOT']);
+        //if (!function_exists('curl_version')) throw new Exception("Curl is required for this library");
+        //if (version_compare(PHP_VERSION, '5.3.0', '<')) throw new Exception("PHPFunctions requires PHP 5.3.x or greater");
+        
+        $this->minscripts = array();
+        $this->mincss = array();
+        
+        if (!empty($args['min_version'])) $this->min_version = $args['min_version'];
+        if (!empty($args['min_debug'])) $this->min_debug = $args['min_debug'];
+        
+        // checks include path
+        self::_checkIncludePath($_SERVER['DOCUMENT_ROOT']);
     }
-    
+
     /**
     * checks if a path has been included into the include path
     * if not adds it
@@ -132,29 +132,45 @@ class PHPFunctions
      * @param mixed $id     Optional, defaults to 0. 
      * @param array $additionalParams Option, defaults to Array
      *
+     * Example: PHPFunctions::jsonReturn('SUCCESS', 'Message goes here', array('key' => 'val'));
+     *
      * @return TODO
      */
-    public static function jsonReturn ($status, $msg, $exit = true, $id = 0, $additionalParams = array())
+    public static function jsonReturn ($status, $msg, $exit = true, $id = 0, $additionalParams = array(), $header = true)
     {
         $return['status'] = $status;
         $return['msg'] = $msg;
 
         if (!empty($id)) $return['id'] = $id;
 
-		// adds additional params to return array if there are any
-		if (!empty($additionalParams))
-		{
-			foreach ($additionalParams as $k => $v)
-			{
-				$return[$k] = $v;
-			}
-		}
+        // if 3rd param is array and not boolean
+        if (is_array($exit) && !empty($exit))
+        {
+            $additionalParams = $exit;
+
+            if ($id === 0) $exit = true; // no ID param was set
+            elseif ($id === false) $exit = false;
+            else $exit = true;
+        }
+
+        // adds additional params to return array if there are any
+        if (!empty($additionalParams))
+        {
+            foreach ($additionalParams as $k => $v)
+            {
+                $return[$k] = $v;
+            }
+        }
+
+        // sets header to json application
+        if ($header) header('Content-Type: application/json');
 
         $json_data = json_encode($return);
 
-		if ($exit) die($json_data);
-		
-		return $json_data;
+        // if exit is set to true, or $id is set to true
+        if ($exit || ($id === true)) die($json_data);
+
+        return $json_data;
     }
     
 	/**
