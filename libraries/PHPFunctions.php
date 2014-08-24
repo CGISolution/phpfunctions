@@ -26,8 +26,11 @@
  *
  */
 
-
 if (!defined('DYNAMIC')) define('DYNAMIC', false);
+
+if (!defined('ENVIRONMENT')) define('ENVIRONMENT', 'development');
+
+require_once 'globalFunctions.php';
  
 class PHPFunctions
 {
@@ -159,17 +162,15 @@ class PHPFunctions
 	* @param String $path - Path to directory to check: Example: application/models/
 	* @param Boolean $local - Optional, defaults true. only create directorys in current document root
 	*/
-	public static function createDir ($path, $local = true)
+	public static function createDir ($path, $local = true, $permissions = 0755)
     {
     	if ($local) $path = $_SERVER['DOCUMENT_ROOT'] . $path;
 
         if (!is_dir($path))
         {
-            $create = mkdir($path, 0777, true);
+            $create = mkdir($path, $permissions, true);
 
-            if ($create === false) throw new exception("Unable to create directory:" . $path);
-            
-            @chmod($path, 0777);
+            if ($create === false) throw new exception("Unable to create directory: " . $path);
         }
         else
         {
@@ -1015,11 +1016,97 @@ exit;
     
     /**
     * used to redirect
-    * exists to ensure nothing executes after Header Location tag
+    * exits to ensure nothing executes after Header Location tag
     */
     public static function redirect ($location)
     {
 	    header("Location: {$location}");
 	    exit;
     }
+    
+    /**
+    * @param $c hexadecimal : #FFFFFF or FFFFFF
+    *
+    * @return boolean - true if hex color
+    */
+    public static function isHexColor ($hex)
+    {
+		$hex = str_replace('#', '', $hex);
+    	
+	 	if (ctype_xdigit($hex) && (strlen($hex) == 6 || strlen($hex) == 3)) return true;
+	 	
+	    return false;
+    }
+    
+    /**
+    * converts hex color to RGB
+	* @return object - { r,b,g }
+	*/
+    public static function hex2rgb ($hex)
+    {
+	   $hex = str_replace('#', '', $hex);
+	
+	   if(strlen($hex) == 3)
+	   {
+	      $r = hexdec(substr($hex,0,1).substr($hex,0,1));
+	      $g = hexdec(substr($hex,1,1).substr($hex,1,1));
+	      $b = hexdec(substr($hex,2,1).substr($hex,2,1));
+	      
+	   }
+	   else
+	   {
+	      $r = hexdec(substr($hex,0,2));
+	      $g = hexdec(substr($hex,2,2));
+	      $b = hexdec(substr($hex,4,2));
+	   }
+	   
+	   return array($r, $g, $b);
+    }
+    
+    public static function sortByDate ($data, $column, $direction = SORT_ASC)
+    {
+		if (empty($data)) return false;
+		
+		$tmp = array();
+		$return = array();
+		
+		foreach ($data as $k => $r)
+		{
+			$date = (is_array($r)) ? strtotime($r[$column]) : strtotime($r->{$column});
+		
+			$tmp[$k] = $date;
+		}
+		
+		asort($tmp);
+		
+		foreach ($tmp as $k => $v)
+		{
+			$return[$k] = $data[$k];
+		}
+		
+		return $return;
+    }
+    
+	
+	public static function arrayToObject ($array)
+	{
+		if (is_object($array)) return $array;
+		
+		return json_decode(json_encode($array), false);
+	}
+	
+	public static function objectToArray ($object)
+	{
+		if (gettype($object) == 'array') return $object;
+		
+		$encode = json_encode($object);
+		
+		if ($encode === false) throw new Exception("Unable to encode Object\n\n" . $e['message']);
+		
+		$decode = json_decode($encode, true);
+		
+		if ($decode === false) throw new Exception("Unable to decode data to convert to array\n\n" . $e['message']);
+	
+		return $decode;
+	}
 }
