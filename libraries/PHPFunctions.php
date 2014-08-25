@@ -138,7 +138,7 @@ class PHPFunctions
      */
     public static function jsonReturn ($status, $msg, $exit = true, $id = 0, $additionalParams = array(), $header = true)
     {
-        $return['status'] = $status;
+        $return['status'] = strtoupper($status);
         $return['msg'] = $msg;
 
         if (!empty($id)) $return['id'] = $id;
